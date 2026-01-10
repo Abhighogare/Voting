@@ -33,7 +33,7 @@ jobs:
           set -e
 
           # Variables
-          APP_DIR=/home/azureuser/voting-app
+          APP_DIR=/home/azureuser/voting
           REPO_URL=https://github.com/${{ github.repository }}.git
           APP_NAME=voting-a
 
