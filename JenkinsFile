@@ -6,7 +6,7 @@ pipeline {
         APP_NAME = "voting-a"
         NODE_VERSION = "18"
         SERVER_USER = "azureuser"
-        SERVER_IP = "YOUR_VM_PUBLIC_IP"
+        SERVER_IP = "20.193.145.33"
     }
 
     stages {
