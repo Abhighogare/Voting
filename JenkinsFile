@@ -14,7 +14,7 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/<ORG>/<REPO>.git'
+                    url: 'https://github.com/Abhighogare/Voting.git'
             }
         }
 
@@ -49,7 +49,7 @@ pipeline {
 
                     # Clone repo if not exists
                     if [ ! -d "${APP_DIR}/.git" ]; then
-                      git clone https://github.com/<ORG>/<REPO>.git ${APP_DIR}
+                      git clone https://github.com/Abhighogare/Voting.git ${APP_DIR}
                     fi
 
                     cd ${APP_DIR}
