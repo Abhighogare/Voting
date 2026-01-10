@@ -1,0 +1,83 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_DIR = "/home/azureuser/voting"
+        APP_NAME = "voting-a"
+        NODE_VERSION = "18"
+        SERVER_USER = "azureuser"
+        SERVER_IP = "YOUR_VM_PUBLIC_IP"
+    }
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/<ORG>/<REPO>.git'
+            }
+        }
+
+        stage('Install Dependencies (CI)') {
+            steps {
+                sh '''
+                  npm install
+                '''
+            }
+        }
+
+        stage('Deploy to Azure VM') {
+            steps {
+                sshagent(credentials: ['azure-vm-ssh']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_IP} << 'EOF'
+                    set -e
+
+                    # Update VM
+                    sudo apt-get update -y
+
+                    # Install Node.js if missing
+                    if ! command -v node >/dev/null 2>&1; then
+                      curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash -
+                      sudo apt-get install -y nodejs
+                    fi
+
+                    # Install PM2 if missing
+                    if ! command -v pm2 >/dev/null 2>&1; then
+                      sudo npm install -g pm2
+                    fi
+
+                    # Clone repo if not exists
+                    if [ ! -d "${APP_DIR}/.git" ]; then
+                      git clone https://github.com/<ORG>/<REPO>.git ${APP_DIR}
+                    fi
+
+                    cd ${APP_DIR}
+
+                    # Pull latest code
+                    git checkout main
+                    git pull origin main
+
+                    # Install production dependencies
+                    npm install --production
+
+                    # Start or restart app
+                    pm2 start server.js --name ${APP_NAME} || pm2 restart ${APP_NAME}
+                    pm2 save
+
+                    EOF
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Deployment successful!"
+        }
+        failure {
+            echo "❌ Deployment failed!"
+        }
+    }
+}
