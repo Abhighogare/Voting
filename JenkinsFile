@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        APP_DIR = "/home/azureuser/voting"
+        APP_DIR = "/home/azureuser/voting-app"
         APP_NAME = "voting-a"
         NODE_VERSION = "18"
         SERVER_USER = "azureuser"
@@ -20,9 +20,7 @@ pipeline {
 
         stage('Install Dependencies (CI)') {
             steps {
-                sh '''
-                  npm install
-                '''
+                sh 'npm install'
             }
         }
 
@@ -30,43 +28,33 @@ pipeline {
             steps {
                 sshagent(credentials: ['azure-vm-ssh']) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_IP} << 'EOF'
-                    set -e
+ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_IP} << 'EOF'
+set -e
 
-                    # Update VM
-                    sudo apt-get update -y
+sudo apt-get update -y
 
-                    # Install Node.js if missing
-                    if ! command -v node >/dev/null 2>&1; then
-                      curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash -
-                      sudo apt-get install -y nodejs
-                    fi
+if ! command -v node >/dev/null 2>&1; then
+  curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash -
+  sudo apt-get install -y nodejs
+fi
 
-                    # Install PM2 if missing
-                    if ! command -v pm2 >/dev/null 2>&1; then
-                      sudo npm install -g pm2
-                    fi
+if ! command -v pm2 >/dev/null 2>&1; then
+  sudo npm install -g pm2
+fi
 
-                    # Clone repo if not exists
-                    if [ ! -d "${APP_DIR}/.git" ]; then
-                      git clone https://github.com/Abhighogare/Voting.git ${APP_DIR}
-                    fi
+if [ ! -d "${APP_DIR}/.git" ]; then
+  git clone https://github.com/Abhighogare/Voting.git ${APP_DIR}
+fi
 
-                    cd ${APP_DIR}
+cd ${APP_DIR}
+git checkout main
+git pull origin main
+npm install --production
 
-                    # Pull latest code
-                    git checkout main
-                    git pull origin main
-
-                    # Install production dependencies
-                    npm install --production
-
-                    # Start or restart app
-                    pm2 start server.js --name ${APP_NAME} || pm2 restart ${APP_NAME}
-                    pm2 save
-
-                    EOF
-                    """
+pm2 start server.js --name ${APP_NAME} || pm2 restart ${APP_NAME}
+pm2 save
+EOF
+"""
                 }
             }
         }
