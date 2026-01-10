@@ -5,7 +5,7 @@ module.exports = {
       script: "server.js",
 
       // ✅ NEW WORKING DIRECTORY (FIX)
-      cwd: "/home/azureuser/apps/voting-app",
+      cwd: "/home/azureuser/apps/voting",
 
       exec_mode: "fork",
       instances: 1,
